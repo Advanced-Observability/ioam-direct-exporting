@@ -1,0 +1,576 @@
+diff --git a/include/uapi/linux/ioam6.h b/include/uapi/linux/ioam6.h
+index e646011..8cee40c 100644
+--- a/include/uapi/linux/ioam6.h
++++ b/include/uapi/linux/ioam6.h
+@@ -29,6 +29,7 @@ struct ioam6_hdr {
+ 	__u8 opt_len;
+ 	__u8 :8;				/* reserved */
+ #define IOAM6_TYPE_PREALLOC 0
++#define IOAM6_TYPE_DEX 4
+ 	__u8 type;
+ } __attribute__((packed));
+ 
+@@ -130,4 +131,140 @@ struct ioam6_trace_hdr {
+ 	__u8	data[];
+ } __attribute__((packed));
+ 
++/*
++ * IOAM Direct EXporting (DEX) Header
++ */
++struct ioam6_dex_hdr {
++	__be16	namespace_id;
++
++#if defined(__LITTLE_ENDIAN_BITFIELD)
++	/* Flags */
++	union {
++		__u8 flags;
++		struct {
++			__u8	:1, /* unused */
++				:1, /* unused */
++				:1, /* unused */
++				:1, /* unused */
++				:1, /* unused */
++				:1, /* unused */
++				:1, /* unused */
++				:1; /* unused */
++		};
++	};
++
++	/* Extension-Flags */
++	union {
++		__u8 extflags;
++		struct {
++			__u8	:1, /* unused */
++				:1, /* unused */
++				:1, /* unused */
++				:1, /* unused */
++				:1, /* unused */
++				:1, /* unused */
++				seqNum:1, /* unused */
++				flowId:1; /* unused */
++		};
++	};
++
++	/* Trace Type and Reserved */
++	union {
++		__be32 type_be32;
++		struct {
++			__u32	bit7:1,		/* must be 0 per RFC 9326 */
++				bit6:1,
++				bit5:1,
++				bit4:1,
++				bit3:1,
++				bit2:1,
++				bit1:1,
++				bit0:1,
++				bit15:1,	/* unused */
++				bit14:1,	/* unused */
++				bit13:1,	/* unused */
++				bit12:1,	/* unused */
++				bit11:1,
++				bit10:1,
++				bit9:1,
++				bit8:1,
++				bit23:1,	/* reserved */
++				bit22:1,
++				bit21:1,	/* unused */
++				bit20:1,	/* unused */
++				bit19:1,	/* unused */
++				bit18:1,	/* unused */
++				bit17:1,	/* unused */
++				bit16:1,	/* unused */
++				:8;		/* reserved */
++		} type;
++	};
++#elif defined(__BIG_ENDIAN_BITFIELD)
++	/* Flags */
++	union {
++		__u8 flags;
++		struct {
++			__u8	:1, /* unused */
++				:1, /* unused */
++				:1, /* unused */
++				:1, /* unused */
++				:1, /* unused */
++				:1, /* unused */
++				:1, /* unused */
++				:1; /* unused */
++		};
++	};
++
++	/* Extension-Flags */
++	union {
++		__u8 extflags;
++		struct {
++			__u8	flowId:1, /* unused */
++				seqNum:1, /* unused */
++				:1, /* unused */
++				:1, /* unused */
++				:1, /* unused */
++				:1, /* unused */
++				:1, /* unused */
++				:1; /* unused */
++		};
++	};
++
++	/* Trace Type and Reserved */
++	union {
++		__be32 type_be32;
++		struct {
++			__u32	bit0:1,
++				bit1:1,
++				bit2:1,
++				bit3:1,
++				bit4:1,
++				bit5:1,
++				bit6:1,
++				bit7:1,		/* must be 0 per RFC 9326 */
++				bit8:1,
++				bit9:1,
++				bit10:1,
++				bit11:1,
++				bit12:1,	/* unused */
++				bit13:1,	/* unused */
++				bit14:1,	/* unused */
++				bit15:1,	/* unused */
++				bit16:1,	/* unused */
++				bit17:1,	/* unused */
++				bit18:1,	/* unused */
++				bit19:1,	/* unused */
++				bit20:1,	/* unused */
++				bit21:1,	/* unused */
++				bit22:1,
++				bit23:1,	/* reserved */
++				:8;		/* reserved */
++		} type;
++	};
++#else
++#error "Please fix <asm/byteorder.h>"
++#endif
++	__u8	extflags_data[];
++} __attribute__((packed));
++
+ #endif /* _LINUX_IOAM6_H */
+diff --git a/include/uapi/linux/ioam6_genl.h b/include/uapi/linux/ioam6_genl.h
+index 3f89b53..a4b9e6d 100644
+--- a/include/uapi/linux/ioam6_genl.h
++++ b/include/uapi/linux/ioam6_genl.h
+@@ -54,6 +54,7 @@ enum {
+ enum ioam6_event_type {
+ 	IOAM6_EVENT_UNSPEC,
+ 	IOAM6_EVENT_TRACE,
++	IOAM6_EVENT_DEX,
+ };
+ 
+ enum ioam6_event_attr {
+@@ -64,6 +65,38 @@ enum ioam6_event_attr {
+ 	IOAM6_EVENT_ATTR_TRACE_TYPE,		/* u32 */
+ 	IOAM6_EVENT_ATTR_TRACE_DATA,		/* Binary */
+ 
++	IOAM6_EVENT_ATTR_OPTION_TYPE,		/* u8 */
++
++	IOAM6_EVENT_ATTR_DEX_NAMESPACE,		/* u16 */
++	IOAM6_EVENT_ATTR_DEX_FLOW_ID,		/* u32 */
++	IOAM6_EVENT_ATTR_DEX_SEQ_NUM,		/* u32 */
++
++	/* attr for ioam data */
++	IOAM6_EVENT_ATTR_DEX_DATA_HOP_LIM_NODE_ID,		/* u32 */
++	IOAM6_EVENT_ATTR_DEX_DATA_INGRESS_EGRESS_INTERFACES,	/* u32 */
++	IOAM6_EVENT_ATTR_DEX_DATA_TIMESTAMP,			/* u32 */
++	IOAM6_EVENT_ATTR_DEX_DATA_TIMESTAMP_FRAC,		/* u32 */
++	IOAM6_EVENT_ATTR_DEX_DATA_TRANSIT,			/* u32 */
++	IOAM6_EVENT_ATTR_DEX_DATA_NAMESPACE_SPECIFIC,		/* u32 */
++	IOAM6_EVENT_ATTR_DEX_DATA_QUEUE_DEPTH,			/* u32 */
++	IOAM6_EVENT_ATTR_DEX_DATA_CHECKSUM,			/* u32 */
++	IOAM6_EVENT_ATTR_DEX_DATA_HOP_LIM_NODE_ID_WIDE,		/* u64 */
++	IOAM6_EVENT_ATTR_DEX_DATA_INGRESS_EGRESS_INTERFACES_WIDE,/* u64 */
++	IOAM6_EVENT_ATTR_DEX_DATA_NAMESPACE_SPECIFIC_WIDE,	/* u64 */
++	IOAM6_EVENT_ATTR_DEX_DATA_BUFFER_OCCUPANCY,		/* u32 */
++	IOAM6_EVENT_ATTR_DEX_BIT_12,				/* undefined */
++	IOAM6_EVENT_ATTR_DEX_BIT_13,				/* undefined */
++	IOAM6_EVENT_ATTR_DEX_BIT_14,				/* undefined */
++	IOAM6_EVENT_ATTR_DEX_BIT_15,				/* undefined */
++	IOAM6_EVENT_ATTR_DEX_BIT_16,				/* undefined */
++	IOAM6_EVENT_ATTR_DEX_BIT_17,				/* undefined */
++	IOAM6_EVENT_ATTR_DEX_BIT_18,				/* undefined */
++	IOAM6_EVENT_ATTR_DEX_BIT_19,				/* undefined */
++	IOAM6_EVENT_ATTR_DEX_BIT_20,				/* undefined */
++	IOAM6_EVENT_ATTR_DEX_BIT_21,				/* undefined */
++	IOAM6_EVENT_ATTR_DEX_OSS_SCID,				/* u32 */
++	IOAM6_EVENT_ATTR_DEX_OSS_DATA,				/* Binary */
++
+ 	__IOAM6_EVENT_ATTR_MAX
+ };
+ 
+diff --git a/include/uapi/linux/ioam6_iptunnel.h b/include/uapi/linux/ioam6_iptunnel.h
+index 64b471d..1997213 100644
+--- a/include/uapi/linux/ioam6_iptunnel.h
++++ b/include/uapi/linux/ioam6_iptunnel.h
+@@ -9,6 +9,22 @@
+ #ifndef _LINUX_IOAM6_IPTUNNEL_H
+ #define _LINUX_IOAM6_IPTUNNEL_H
+ 
++/* Option types:
++ *	- Pre-allocated Trace Option (PTO)
++ *	- Direct EXport (DEX)
++ */
++enum {
++	__IOAM6_OPTION_TYPE_MIN,
++
++	IOAM6_OPTION_TYPE_PTO,
++	IOAM6_OPTION_TYPE_DEX,
++
++	__IOAM6_OPTION_TYPE_MAX,
++};
++
++#define IOAM6_OPTION_TYPE_MIN (__IOAM6_OPTION_TYPE_MIN + 1)
++#define IOAM6_OPTION_TYPE_MAX (__IOAM6_OPTION_TYPE_MAX - 1)
++
+ /* Encap modes:
+  *  - inline: direct insertion
+  *  - encap: ip6ip6 encapsulation
+@@ -56,6 +72,12 @@ enum {
+ 	 */
+ 	IOAM6_IPTUNNEL_SRC,		/* struct in6_addr */
+ 
++	/* Option Type */
++	IOAM6_OPTION_TYPE,		/* u8 */
++
++	/* IOAM Direct Export Header */
++	IOAM6_IPTUNNEL_DEX,		/* struct ioam6_dex_hdr */
++
+ 	__IOAM6_IPTUNNEL_MAX,
+ };
+ 
+diff --git a/include/version.h b/include/version.h
+index fe3d93b..9df9712 100644
+--- a/include/version.h
++++ b/include/version.h
+@@ -1 +1 @@
+-static const char version[] = "6.12.0";
++static const char version[] = "6.12.0-ioam-dex";
+diff --git a/ip/iproute.c b/ip/iproute.c
+index 9520729..82474e6 100644
+--- a/ip/iproute.c
++++ b/ip/iproute.c
+@@ -99,7 +99,7 @@ static void usage(void)
+ 		"BOOL := [1|0]\n"
+ 		"FEATURES := ecn\n"
+ 		"ENCAPTYPE := [ mpls | ip | ip6 | seg6 | seg6local | rpl | ioam6 | xfrm ]\n"
+-		"ENCAPHDR := [ MPLSLABEL | SEG6HDR | SEG6LOCAL | IOAM6HDR | XFRMINFO ]\n"
++		"ENCAPHDR := [ MPLSLABEL | SEG6HDR | SEG6LOCAL | IOAM6 | XFRMINFO ]\n"
+ 		"SEG6HDR := [ mode SEGMODE ] segs ADDR1,ADDRi,ADDRn [hmac HMACKEYID] [cleanup]\n"
+ 		"SEGMODE := [ encap | encap.red | inline | l2encap | l2encap.red ]\n"
+ 		"SEG6LOCAL := action ACTION [ OPTIONS ] [ count ]\n"
+@@ -111,7 +111,9 @@ static void usage(void)
+ 		"            table TABLEID | vrftable TABLEID | endpoint PROGNAME }\n"
+ 		"FLAVORS := { FLAVOR[,FLAVOR] }\n"
+ 		"FLAVOR := { psp | usp | usd | next-csid }\n"
+-		"IOAM6HDR := trace prealloc type IOAM6_TRACE_TYPE ns IOAM6_NAMESPACE size IOAM6_TRACE_SIZE\n"
++		"IOAM6 := [ IOAM6PTO | IOAM6DEX ]\n"
++		"IOAM6PTO := trace prealloc type IOAM6_TRACE_TYPE ns IOAM6_NAMESPACE size IOAM6_TRACE_SIZE\n"
++		"IOAM6DEX := dex trace-type IOAM6_TRACE_TYPE ns IOAM6_NAMESPACE ext-flags IOAM6DEX_EXT_FLAGS\n"
+ 		"XFRMINFO := if_id IF_ID [ link_dev LINK ]\n"
+ 		"ROUTE_GET_FLAGS := ROUTE_GET_FLAG [ ROUTE_GET_FLAGS ]\n"
+ 		"ROUTE_GET_FLAG := [ connected | fibmatch | notify ]\n");
+diff --git a/ip/iproute_lwtunnel.c b/ip/iproute_lwtunnel.c
+index a7885db..b0af8c4 100644
+--- a/ip/iproute_lwtunnel.c
++++ b/ip/iproute_lwtunnel.c
+@@ -305,6 +305,21 @@ static void print_encap_rpl(FILE *fp, struct rtattr *encap)
+ 	print_rpl_srh(fp, srh);
+ }
+ 
++static const char *ioam6_option_types[IOAM6_OPTION_TYPE_MAX + 1] = {
++	[IOAM6_OPTION_TYPE_PTO] = "trace",
++	[IOAM6_OPTION_TYPE_DEX] = "dex",
++};
++
++static const char *format_ioam6_option_type(int option_type)
++{
++	if (option_type < IOAM6_OPTION_TYPE_MIN ||
++		  option_type > IOAM6_OPTION_TYPE_MAX ||
++		  !ioam6_option_types[option_type])
++    return "<unknown>";
++
++	return ioam6_option_types[option_type];
++}
++
+ static const char *ioam6_mode_types[IOAM6_IPTUNNEL_MODE_MAX + 1] = {
+ 	[IOAM6_IPTUNNEL_MODE_INLINE]	= "inline",
+ 	[IOAM6_IPTUNNEL_MODE_ENCAP]	= "encap",
+@@ -337,12 +352,13 @@ static void print_encap_ioam6(FILE *fp, struct rtattr *encap)
+ {
+ 	struct rtattr *tb[IOAM6_IPTUNNEL_MAX + 1];
+ 	struct ioam6_trace_hdr *trace;
++	struct ioam6_dex_hdr *dex;
++	__u8 option_type, mode;
+ 	__u32 freq_k, freq_n;
+-	__u8 mode;
+ 
+ 	parse_rtattr_nested(tb, IOAM6_IPTUNNEL_MAX, encap);
+-	if (!tb[IOAM6_IPTUNNEL_MODE] || !tb[IOAM6_IPTUNNEL_TRACE] ||
+-	    !tb[IOAM6_IPTUNNEL_FREQ_K] || !tb[IOAM6_IPTUNNEL_FREQ_N])
++	if (!tb[IOAM6_IPTUNNEL_MODE] || !tb[IOAM6_OPTION_TYPE] ||
++      !tb[IOAM6_IPTUNNEL_FREQ_K] || !tb[IOAM6_IPTUNNEL_FREQ_N])
+ 		return;
+ 
+ 	freq_k = rta_getattr_u32(tb[IOAM6_IPTUNNEL_FREQ_K]);
+@@ -372,13 +388,35 @@ static void print_encap_ioam6(FILE *fp, struct rtattr *encap)
+ 						   tb[IOAM6_IPTUNNEL_DST]));
+ 	}
+ 
+-	trace = RTA_DATA(tb[IOAM6_IPTUNNEL_TRACE]);
+-
+-	print_null(PRINT_ANY, "trace", "trace ", NULL);
+-	print_null(PRINT_ANY, "prealloc", "prealloc ", NULL);
+-	print_hex(PRINT_ANY, "type", "type %#08x ", ntohl(trace->type_be32) >> 8);
+-	print_uint(PRINT_ANY, "ns", "ns %u ", ntohs(trace->namespace_id));
+-	print_uint(PRINT_ANY, "size", "size %u ", trace->remlen * 4);
++  if (!tb[IOAM6_OPTION_TYPE])
++    option_type = IOAM6_OPTION_TYPE_PTO;
++  else
++	  option_type = rta_getattr_u8(tb[IOAM6_OPTION_TYPE]);
++
++	print_string(PRINT_ANY, "option-type", "option-type %s ",
++      format_ioam6_option_type(option_type));
++
++	if (option_type == IOAM6_OPTION_TYPE_PTO) {
++    if (!tb[IOAM6_IPTUNNEL_TRACE])
++      return;
++		trace = RTA_DATA(tb[IOAM6_IPTUNNEL_TRACE]);
++
++		print_null(PRINT_ANY, "prealloc", "prealloc ", NULL);
++		print_hex(PRINT_ANY, "type", "type %#08x ", ntohl(trace->type_be32) >> 8);
++		print_uint(PRINT_ANY, "ns", "ns %u ", ntohs(trace->namespace_id));
++		print_uint(PRINT_ANY, "size", "size %u ", trace->remlen * 4);
++	} else if (option_type == IOAM6_OPTION_TYPE_DEX) {
++    if (!tb[IOAM6_IPTUNNEL_DEX])
++      return;
++		dex = RTA_DATA(tb[IOAM6_IPTUNNEL_DEX]);
++
++		print_hex(PRINT_ANY, "trace-type", "trace-type %#08x ",
++					ntohl(dex->type_be32) >> 8);
++		print_uint(PRINT_ANY, "ns", "ns %u ", ntohs(dex->namespace_id));
++		print_hex(PRINT_ANY, "flags", "flags %#01x ", dex->flags);
++		print_hex(PRINT_ANY, "ext-flags", "ext-flags %#01x ", dex->extflags);
++	} else
++		return;
+ }
+ 
+ static const char *seg6_action_names[SEG6_LOCAL_ACTION_MAX + 1] = {
+@@ -1119,16 +1157,17 @@ static int parse_ioam6_freq(char *buf, __u32 *freq_k, __u32 *freq_n)
+ static int parse_encap_ioam6(struct rtattr *rta, size_t len, int *argcp,
+ 			     char ***argvp)
+ {
+-	int ns_found = 0, argc = *argcp;
++	int ns_found = 0, ext_flags_found = 0, argc = *argcp;
++  __u8 option_type = 0, mode, ext_flags = 0;
+ 	__u16 trace_ns, trace_size = 0;
+ 	struct ioam6_trace_hdr *trace;
++  struct ioam6_dex_hdr *dex;
+ 	inet_prefix saddr, daddr;
+ 	char **argv = *argvp;
+ 	__u32 trace_type = 0;
+ 	__u32 freq_k, freq_n;
+ 	char buf[16] = {0};
+ 	bool has_src;
+-	__u8 mode;
+ 
+ 	if (strcmp(*argv, "freq") != 0) {
+ 		freq_k = IOAM6_IPTUNNEL_FREQ_MIN;
+@@ -1203,18 +1242,20 @@ static int parse_encap_ioam6(struct rtattr *rta, size_t len, int *argcp,
+ 		NEXT_ARG();
+ 	}
+ 
+-	if (strcmp(*argv, "trace") != 0)
+-		missarg("trace");
+-
+-	NEXT_ARG();
+-
+-	if (strcmp(*argv, "prealloc") != 0)
+-		missarg("prealloc");
++	if (strcmp(*argv, "trace") == 0) {
++		option_type = IOAM6_OPTION_TYPE_PTO;
++		NEXT_ARG();
++		if (strcmp(*argv, "prealloc") != 0)
++			missarg("prealloc");
++	} else if (strcmp(*argv, "dex") == 0)
++		option_type = IOAM6_OPTION_TYPE_DEX;
++	else
++		invarg("Option type should be \"trace\" or \"dex\"", *argv);
+ 
+ 	while (NEXT_ARG_OK()) {
+ 		NEXT_ARG_FWD();
+ 
+-		if (strcmp(*argv, "type") == 0) {
++		if (option_type == IOAM6_OPTION_TYPE_PTO && strcmp(*argv, "type") == 0) {
+ 			NEXT_ARG();
+ 
+ 			if (trace_type)
+@@ -1222,15 +1263,17 @@ static int parse_encap_ioam6(struct rtattr *rta, size_t len, int *argcp,
+ 
+ 			if (get_u32(&trace_type, *argv, 0) || !trace_type)
+ 				invarg("Invalid trace type", *argv);
+-		} else if (strcmp(*argv, "ns") == 0) {
++		} else if (option_type == IOAM6_OPTION_TYPE_DEX &&
++			  strcmp(*argv, "trace-type") == 0) {
+ 			NEXT_ARG();
+ 
+-			if (ns_found++)
+-				duparg2("ns", *argv);
++			if (trace_type)
++				duparg2("trace-type", *argv);
+ 
+-			if (get_u16(&trace_ns, *argv, 0))
+-				invarg("Invalid namespace ID", *argv);
+-		} else if (strcmp(*argv, "size") == 0) {
++			if (get_u32(&trace_type, *argv, 0) || !trace_type)
++				invarg("Invalid trace type", *argv);
++		} else if (option_type == IOAM6_OPTION_TYPE_PTO &&
++			strcmp(*argv, "size") == 0) {
+ 			NEXT_ARG();
+ 
+ 			if (trace_size)
+@@ -1245,34 +1288,70 @@ static int parse_encap_ioam6(struct rtattr *rta, size_t len, int *argcp,
+ 
+ 			if (trace_size > IOAM6_TRACE_DATA_SIZE_MAX)
+ 				invarg("Trace size is too big", *argv);
+-		} else {
++		} else if (strcmp(*argv, "ns") == 0) {
++			NEXT_ARG();
++
++			if (ns_found++)
++				duparg2("ns", *argv);
++
++			if (get_u16(&trace_ns, *argv, 0))
++				invarg("Invalid namespace ID", *argv);
++		} else if (option_type == IOAM6_OPTION_TYPE_DEX &&
++			strcmp(*argv, "ext-flags") == 0) {
++			NEXT_ARG();
++
++			if (ext_flags_found++)
++				duparg2("ext-flags", *argv);
++
++			if (get_u8(&ext_flags, *argv, 0))
++				invarg("Invalid trace-flags", *argv);
++    } else {
+ 			break;
+ 		}
+ 	}
+ 
++  if (option_type == IOAM6_OPTION_TYPE_PTO && !trace_size)
++		missarg("size");
++
++	if (option_type == IOAM6_OPTION_TYPE_DEX && !ext_flags_found)
++		missarg("ext-flags");
++
+ 	if (!trace_type)
+ 		missarg("type");
++
+ 	if (!ns_found)
+ 		missarg("ns");
+-	if (!trace_size)
+-		missarg("size");
+ 
+ 	trace = calloc(1, sizeof(*trace));
+ 	if (!trace)
+ 		return -1;
+ 
+-	trace->type_be32 = htonl(trace_type << 8);
+-	trace->namespace_id = htons(trace_ns);
+-	trace->remlen = (__u8)(trace_size / 4);
++  dex = calloc(1, sizeof(*dex));
++	if (!dex)
++		return -1;
+ 
+-	if (rta_addattr32(rta, len, IOAM6_IPTUNNEL_FREQ_K, freq_k) ||
++  if (option_type == IOAM6_OPTION_TYPE_PTO) {
++		trace->type_be32 = htonl(trace_type << 8);
++		trace->namespace_id = htons(trace_ns);
++		trace->remlen = (__u8)(trace_size / 4);
++	} else if (option_type == IOAM6_OPTION_TYPE_DEX) {
++		dex->type_be32 = htonl(trace_type << 8);
++		dex->namespace_id = htons(trace_ns);
++		dex->flags = 0; /* unused */
++		dex->extflags = ext_flags;
++	} else
++		return -1;
++
++	if (rta_addattr8(rta, len, IOAM6_OPTION_TYPE, option_type) ||
++      rta_addattr32(rta, len, IOAM6_IPTUNNEL_FREQ_K, freq_k) ||
+ 	    rta_addattr32(rta, len, IOAM6_IPTUNNEL_FREQ_N, freq_n) ||
+ 	    rta_addattr8(rta, len, IOAM6_IPTUNNEL_MODE, mode) ||
+ 	    (mode != IOAM6_IPTUNNEL_MODE_INLINE && has_src &&
+ 	     rta_addattr_l(rta, len, IOAM6_IPTUNNEL_SRC, &saddr.data, saddr.bytelen)) ||
+ 	    (mode != IOAM6_IPTUNNEL_MODE_INLINE &&
+ 	     rta_addattr_l(rta, len, IOAM6_IPTUNNEL_DST, &daddr.data, daddr.bytelen)) ||
+-	    rta_addattr_l(rta, len, IOAM6_IPTUNNEL_TRACE, trace, sizeof(*trace))) {
++	    rta_addattr_l(rta, len, IOAM6_IPTUNNEL_TRACE, trace, sizeof(*trace)) ||
++		  rta_addattr_l(rta, len, IOAM6_IPTUNNEL_DEX, dex, sizeof(*dex))) {
+ 		free(trace);
+ 		return -1;
+ 	}
+@@ -1281,6 +1360,8 @@ static int parse_encap_ioam6(struct rtattr *rta, size_t len, int *argcp,
+ 	*argvp = argv - 1;
+ 
+ 	free(trace);
++	free(dex);
++
+ 	return 0;
+ }
+ 
+diff --git a/man/man8/ip-route.8.in b/man/man8/ip-route.8.in
+index 676f289..dce1ba6 100644
+--- a/man/man8/ip-route.8.in
++++ b/man/man8/ip-route.8.in
+@@ -257,6 +257,11 @@ throw " | " unreachable " | " prohibit " | " blackhole " | " nat " ]"
+ .IR ADDRESS " ] ["
+ .B tundst
+ .IR ADDRESS " ] "
++.RB " [ "
++.IR "IOAM6_PTO " | " IOAM6_DEX " ] "
++
++.ti -8
++.IR IOAM6_PTO " := "
+ .B trace
+ .B prealloc
+ .B type
+@@ -266,6 +271,16 @@ throw " | " unreachable " | " prohibit " | " blackhole " | " nat " ]"
+ .B size
+ .IR IOAM6_TRACE_SIZE
+ 
++.ti -8
++.IR IOAM6_DEX " := "
++.B dex
++.B ns
++.IR IOAM6_NAMESPACE
++.B trace-type
++.IR IOAM6_TRACE_TYPE
++.B ext-flags
++.IR IOAM6_DEX_EXT_FLAGS
++
+ .ti -8
+ .IR ROUTE_GET_FLAGS " := "
+ .IR ROUTE_GET_FLAG " [ "
+@@ -1050,7 +1065,7 @@ automatically.
+ - IPv6 address of the tunnel destination (outer header), not used with inline
+ mode.
+ 
+-.B type
++.B (trace-)type
+ .I IOAM6_TRACE_TYPE
+ - List of IOAM data required in the trace, represented by a bitfield (24 bits).
+ .sp
+@@ -1063,6 +1078,11 @@ mode.
+ .B size
+ .I IOAM6_TRACE_SIZE
+ - Size, in octets, of the pre-allocated trace data block.
++.sp
++
++.B ext-flags
++.I IOAM6_DEX_EXT_FLAGS
++- Extension flags (RFC 9326) for IOAM Direct EXporting (DEX)
+ .in -2
+ 
+ .B xfrm

@@ -1,0 +1,10 @@
+ioamPacketName=,nbMTU=99999,nbIOAM=1,insertionDEX=True,encapMode=False;971803.75;11568359424.0;29197325;33000001
+ioamPacketName=,nbMTU=99999,nbIOAM=1,insertionDEX=True,encapMode=False;975814.9375;11616102400.0;29279455;33000001
+ioamPacketName=,nbMTU=99999,nbIOAM=1,insertionDEX=True,encapMode=False;978614.1875;11649430528.0;29254514;33000001
+ioamPacketName=,nbMTU=99999,nbIOAM=1,insertionDEX=True,encapMode=False;979842.5;11664043008.0;29255661;33000001
+ioamPacketName=,nbMTU=99999,nbIOAM=1,insertionDEX=True,encapMode=False;975764.0;11615483904.0;29231420;33000001
+ioamPacketName=,nbMTU=99999,nbIOAM=1,insertionDEX=True,encapMode=False;974286.625;11597908992.0;29233774;33000001
+ioamPacketName=,nbMTU=99999,nbIOAM=1,insertionDEX=True,encapMode=False;974442.375;11599765504.0;29232467;33000001
+ioamPacketName=,nbMTU=99999,nbIOAM=1,insertionDEX=True,encapMode=False;975922.0;11617370112.0;29281325;33000001
+ioamPacketName=,nbMTU=99999,nbIOAM=1,insertionDEX=True,encapMode=False;975465.0625;11611941888.0;29212853;33000001
+ioamPacketName=,nbMTU=99999,nbIOAM=1,insertionDEX=True,encapMode=False;975684.0;11614544896.0;29271636;33000001

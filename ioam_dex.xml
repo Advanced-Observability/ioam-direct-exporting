@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ipfix-elements>
+    <scope>
+        <pen>10383</pen>
+        <name>ULiege</name>
+        <biflow mode="none"></biflow>
+    </scope>
+
+    <element>
+        <id>0</id>
+        <name>IOAM_HOP_LIM_NODE_ID</name>
+        <dataType>octetArray</dataType>
+    </element>
+    <element>
+        <id>2</id>
+        <name>IOAM_TIMESTAMP</name>
+        <dataType>unsigned32</dataType>
+    </element>
+    <element>
+        <id>3</id>
+        <name>IOAM_TIMESTAMP_FRAC</name>
+        <dataType>unsigned32</dataType>
+    </element>
+    <element>
+        <id>5</id>
+        <name>IOAM_NAMESPACE</name>
+        <dataType>octetArray</dataType>
+    </element>
+    <element>
+        <id>8</id>
+        <name>IOAM_HOP_LIM_NODE_ID_WIDE</name>
+        <dataType>octetArray</dataType>
+    </element>
+    <element>
+        <id>10</id>
+        <name>IOAM_NAMESPACE_WIDE</name>
+        <dataType>octetArray</dataType>
+    </element>
+    <element>
+        <id>22</id>
+        <name>IOAM_OSS</name>
+        <dataType>octetArray</dataType>
+    </element>
+    <element>
+        <id>32767</id>
+        <name>IOAM_TYPE</name>
+        <dataType>octetArray</dataType>
+    </element>
+</ipfix-elements>
